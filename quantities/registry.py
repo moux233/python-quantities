@@ -49,7 +49,9 @@ class UnitRegistry:
 
     def __getitem__(self, label):
         """Parses a string description of a unit e.g., 'g/cc'"""
-
+        label = label.replace('µ', 'u')
+        label = label.replace('²', '^2')
+        label = label.replace('°', 'deg')
         label = self.__regex.sub(
             r"\g<1>*\g<2>", label.replace('^', '**').replace('·', '*'))
 
@@ -57,6 +59,7 @@ class UnitRegistry:
         if label == '': label = 'dimensionless'
         if "%" in label: label = label.replace("%", "percent")
         if label.lower() == "in": label = "inch"
+        
 
         return self.__registry[label]
 

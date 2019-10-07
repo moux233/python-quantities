@@ -194,6 +194,9 @@ class Quantity(np.ndarray):
         mag = self.magnitude
         mag *= cf
         self._dimensionality = to_u.dimensionality
+        
+    def convert(self, units):
+        self.units = validate_dimensionality(units)
 
     def rescale(self, units):
         """
@@ -743,6 +746,31 @@ class Quantity(np.ndarray):
         # constructor copies by default
         return Quantity(self.magnitude, self.dimensionality)
 
+    def diff1(self, extend=True):
+        '''
+        X.diff1()\n
+        first difference along axis 0\n
+        same size as X (last element is doubled)\n
+        same unit as X
+        '''
+        Resultat = self.copy()
+                # vecteur
+        if self.ndim == 1:
+            if extend:
+                Resultat[:-1] = np.diff(self, n=1, axis=0)
+                Resultat[-1] = Resultat[-2]
+            else:
+                Resultat[1:] = np.diff(self, n=1, axis=0)
+                Resultat[0] = Resultat[1]
+        # matrice
+        elif self.ndim == 2:
+            if extend:
+                Resultat[:-1, :] = np.diff(self, n=1, axis=0)
+                Resultat[-1, :] = Resultat[-2, :]
+            else:
+                Resultat[1:, :] = np.diff(self, n=1, axis=0)
+                Resultat[0, :] = Resultat[1, :]    
+        return Resultat
 
 def _reconstruct_quantity(subtype, baseclass, baseshape, basetype,):
     """Internal function that builds a new MaskedArray from the

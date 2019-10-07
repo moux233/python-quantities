@@ -4,7 +4,7 @@
 from __future__ import absolute_import
 
 from math import pi
-
+from .time import s, h
 from ..unitquantity import UnitQuantity, dimensionless
 
 rad = radian = radians = UnitQuantity(
@@ -40,6 +40,15 @@ deg = degree = degrees = arcdeg = arcdegree = angular_degree = UnitQuantity(
     aliases=[
         'degree', 'degrees', 'arc_degree', 'arc_degrees', 'angular_degree',
         'angular_degrees', 'arcdegrees', 'arcdeg'
+    ]
+)
+mdeg = millidegree = millidegree = UnitQuantity(
+    'millidegree',
+    degree/1000,
+    symbol='mdeg',
+    u_symbol='m°',
+    aliases=[
+        'millidegree', 'millidegrees'
     ]
 )
 arcminute = arcmin = arc_minute = angular_minute = UnitQuantity(
@@ -102,6 +111,14 @@ sr = steradian = UnitQuantity(
     radian**2,
     symbol='sr',
     aliases=['steradians']
+)
+
+degph = degree_per_hour = UnitQuantity(
+        'degree per hour',
+        deg/h,
+        symbol='deg/h',
+        u_symbol='°/h',
+        aliases=['degree_per_hour']
 )
 
 del UnitQuantity

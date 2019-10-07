@@ -25,7 +25,7 @@ class _Config(object):
 
     def __init__(self):
         self._lock = threading.RLock()
-        self._use_unicode = False
+        self._use_unicode = True
 
 config = _Config()
 

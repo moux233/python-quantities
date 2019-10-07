@@ -3,7 +3,7 @@
 from __future__ import absolute_import
 
 from ..unitquantity import UnitQuantity
-from .length import m, nmi
+from .length import m, km, nmi
 from .time import s, h
 
 
@@ -20,4 +20,12 @@ kt = knot = knot_international = international_knot = UnitQuantity(
     aliases=['knot', 'knots', 'knot_international', 'international_knot']
 )
 
-del UnitQuantity, m, nmi, s, h
+kmph = UnitQuantity(
+    'kilometres_per_hour',
+    km/h,
+    symbol='km/h',
+    aliases=['kilometre_per_hour']
+)
+
+
+del UnitQuantity, m, km, nmi, s, h

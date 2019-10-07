@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Quantities is designed to handle arithmetic and conversions of
 physical quantities, which have a magnitude, dimensionality specified
@@ -265,7 +266,9 @@ units, they should still conform to valid python expressions.
 
 """
 
-from __future__ import absolute_import
+#from __future__ import absolute_import
+
+print('load quantities')
 
 from ._version import get_versions
 __version__ = get_versions()['version']
