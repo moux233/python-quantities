@@ -309,6 +309,24 @@ class Quantity(np.ndarray):
     def __imul__(self, other):
         return super(Quantity, self).__imul__(other)
 
+    @with_doc(np.ndarray.__matmul__)
+    def __matmul__(self, other):
+        '''
+        self @ other
+        to-do verify other type
+        '''
+        if isinstance(other, self.__class__):
+            return (self.magnitude @ other.magnitude) * self.units * other.units
+        else:
+            return (self.magnitude @ np.asarray(other)) * self.units
+    
+    def __rmatmul__(self, other):
+        '''
+        other @ self
+        other is not a quantity
+        '''
+        return (np.asarray(other) @ self.magnitude) * self.units
+    
     @with_doc(np.ndarray.__rmul__)
     def __rmul__(self, other):
         return np.multiply(other, self)
