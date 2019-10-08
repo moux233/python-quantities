@@ -124,7 +124,7 @@ nmi = nautical_mile = UnitLength(
     'nautical_mile',
     1.852e3*m,
     symbol='nmi',
-    aliases=['nmile', 'nmiles', 'nautical_miles']
+    aliases=['nmile', 'nmiles', 'nautical_miles', 'nautique', 'Nq']
 )
 pt = printers_point = point = UnitLength(
     'printers_point',
