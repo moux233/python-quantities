@@ -793,7 +793,6 @@ class Quantity(np.ndarray):
 def _reconstruct_quantity(subtype, baseclass, baseshape, basetype,):
     """Internal function that builds a new MaskedArray from the
     information stored in a pickle.
-
     """
     _data = np.ndarray.__new__(baseclass, baseshape, basetype)
     return subtype.__new__(subtype, _data, dtype=basetype,)

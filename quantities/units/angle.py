@@ -42,13 +42,22 @@ deg = degree = degrees = arcdeg = arcdegree = angular_degree = UnitQuantity(
         'angular_degrees', 'arcdegrees', 'arcdeg'
     ]
 )
-mdeg = millidegree = millidegree = UnitQuantity(
+mdeg = millidegree = UnitQuantity(
     'millidegree',
     degree/1000,
     symbol='mdeg',
     u_symbol='m°',
     aliases=[
         'millidegree', 'millidegrees'
+    ]
+)
+udeg = microdegree = UnitQuantity(
+    'microdegree',
+    millidegree/1000,
+    symbol='udeg',
+    u_symbol='µ°',
+    aliases=[
+        'microdegree', 'microdegrees'
     ]
 )
 arcminute = arcmin = arc_minute = angular_minute = UnitQuantity(
@@ -113,12 +122,13 @@ sr = steradian = UnitQuantity(
     aliases=['steradians']
 )
 
-degph = degree_per_hour = UnitQuantity(
-        'degree per hour',
-        deg/h,
-        symbol='deg/h',
-        u_symbol='°/h',
-        aliases=['degree_per_hour']
-)
+# ne sert à rien : 'deg/h' est parsé en 'deg' et 'h'
+#degph = degree_per_hour = UnitQuantity(
+#        'degree per hour',
+#        deg/h,
+#        symbol='deg/h',
+#        u_symbol='°/h',
+#        aliases=['degree_per_hour']
+#)
 
 del UnitQuantity

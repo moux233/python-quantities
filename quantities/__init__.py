@@ -266,9 +266,7 @@ units, they should still conform to valid python expressions.
 
 """
 
-#from __future__ import absolute_import
-
-print('load quantities')
+from __future__ import absolute_import
 
 from ._version import get_versions
 __version__ = get_versions()['version']

@@ -17,4 +17,10 @@ count = counts = UnitQuantity(
     aliases=['cts', 'counts']
 )
 
+parts_per_million = UnitQuantity(
+    'parts_per_million',
+    1e-6*dimensionless,
+    symbol='ppm'
+)
+
 del UnitQuantity
