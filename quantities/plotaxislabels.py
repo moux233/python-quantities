@@ -11,7 +11,7 @@ default_labels_FR = {
         'Température': ['°C', 'degC', 'm°C', 'mdegC', 'K'],
         'Temps': ['h', 'min', 's'],
         'Angle': ['deg', '°', 'arcmin', 'arcsec', 'rad', 'mrad', 'mdeg', 'µdeg'],
-        'Vitesse': ['m/s', 'kn'],
+        'Vitesse': ['m/s', 'kn', 'km/h'],
         'Longueur': ['m', 'km', 'mm', 'µm', 'nm', 'Nq'],
         }
 

@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
 """
+Maxime Rattier
+2019
+
+sous-classe ndarray
+new : creator
+array_finalize : copy
+array_wrap : func, from template [:]
+
 """
 from __future__ import absolute_import
 
@@ -116,7 +124,7 @@ class Quantity(np.ndarray):
     # TODO: what is an appropriate value?
     __array_priority__ = 21
 
-    def __new__(cls, data, units='', dtype=None, copy=True):
+    def __new__(cls, data, units='', meta=None, dtype=None, copy=True):
         if isinstance(data, Quantity):
             if units:
                 data = data.rescale(units)
@@ -127,6 +135,9 @@ class Quantity(np.ndarray):
         ret = np.array(data, dtype=dtype, copy=copy).view(cls)
         ret._dimensionality.update(validate_dimensionality(units))
         
+        # ajout métadonnées
+        ret._meta = meta
+        
         if isinstance(units, Quantity):
             unitstr = units._dimensionality.string
         elif isinstance(units, Dimensionality):
@@ -135,7 +146,7 @@ class Quantity(np.ndarray):
             unitstr = units
         try:
             ret._plotaxislabel = plotaxislabels_dict[unitstr]
-        except KeyError as error:
+        except KeyError:
             ret._plotaxislabel = ''
     
         return ret
@@ -158,7 +169,7 @@ class Quantity(np.ndarray):
 
     @property
     def real(self):
-        return Quantity(self.magnitude.real, self.dimensionality)
+        return Quantity(self.magnitude.real, self.dimensionality, self.meta)
 
     @real.setter
     def real(self, r):
@@ -166,7 +177,7 @@ class Quantity(np.ndarray):
 
     @property
     def imag(self):
-        return Quantity(self.magnitude.imag, self.dimensionality)
+        return Quantity(self.magnitude.imag, self.dimensionality, self.meta)
 
     @imag.setter
     def imag(self, i):
@@ -234,7 +245,7 @@ class Quantity(np.ndarray):
                 'Unable to convert between units of "%s" and "%s"'
                 %(from_u._dimensionality, to_u._dimensionality)
             )
-        return Quantity(cf*self.magnitude, to_u)
+        return Quantity(cf*self.magnitude, to_u, self.meta)
 
     @with_doc(np.ndarray.astype)
     def astype(self, dtype=None, **kwargs):
@@ -246,7 +257,7 @@ class Quantity(np.ndarray):
             if self.__array_priority__ >= Quantity.__array_priority__:
                 ret = type(self)(ret, self._dimensionality)
             else:
-                ret = Quantity(ret, self._dimensionality)
+                ret = Quantity(ret, self._dimensionality, self.meta)
 
         return ret
 
@@ -254,6 +265,8 @@ class Quantity(np.ndarray):
         self._dimensionality = getattr(obj, 'dimensionality', Dimensionality())
         if hasattr(obj, '_plotaxislabel'):
             self._plotaxislabel = getattr(obj, '_plotaxislabel')
+        if hasattr(obj, '_meta'):
+            self._meta = getattr(obj, '_meta')
 
 
 
@@ -285,11 +298,13 @@ class Quantity(np.ndarray):
         if not isinstance(obj, Quantity):
             # backwards compatibility with numpy-1.3
             obj = self.__array_prepare__(obj, context)
-        else:
+        else:  # obj is a Quantity
             try:
                 obj._plotaxislabel = plotaxislabels_dict[obj._dimensionality.string]
             except KeyError:
                 obj._plotaxislabel = ''
+            print('array_wrap')
+            obj._meta = getattr(self, '_meta', {})
         
         return obj
 
@@ -426,8 +441,8 @@ class Quantity(np.ndarray):
         ret = super(Quantity, self).__getitem__(key)
         if isinstance(ret, Quantity):
             return ret
-        else:
-            return Quantity(ret, self._dimensionality)
+        else:  # scalaires
+            return Quantity(ret, self._dimensionality, self.meta)
 
     @with_doc(np.ndarray.__setitem__)
     def __setitem__(self, key, value):
@@ -502,19 +517,20 @@ class Quantity(np.ndarray):
     def sum(self, axis=None, dtype=None, out=None):
         ret = self.magnitude.sum(axis, dtype, None if out is None else out.magnitude)
         dim = self.dimensionality
+        meta = self._meta
         if out is None:
-            return Quantity(ret, dim, copy=False)
+            return Quantity(ret, dim, meta, copy=False)
         if not isinstance(out, Quantity):
             raise TypeError("out parameter must be a Quantity")
         out._dimensionality = dim
+        out._meta = meta
         return out
 
     @with_doc(np.nansum)
     def nansum(self, axis=None, dtype=None, out=None):
-        import numpy as np
         return Quantity(
             np.nansum(self.magnitude, axis, dtype, out),
-            self.dimensionality,
+            self.dimensionality, self._meta,
             copy=False
         )
 
@@ -563,11 +579,13 @@ class Quantity(np.ndarray):
     def max(self, axis=None, out=None):
         ret = self.magnitude.max(axis, None if out is None else out.magnitude)
         dim = self.dimensionality
+        meta = self._meta
         if out is None:
-            return Quantity(ret, dim, copy=False)
+            return Quantity(ret, dim, meta, copy=False)
         if not isinstance(out, Quantity):
             raise TypeError("out parameter must be a Quantity")
         out._dimensionality = dim
+        out._meta = meta
         return out
 
     @with_doc(np.ndarray.argmax)
@@ -578,7 +596,7 @@ class Quantity(np.ndarray):
     def nanmax(self, axis=None, out=None):
         return Quantity(
             np.nanmax(self.magnitude),
-            self.dimensionality,
+            self.dimensionality, self._meta,
             copy=False
         )
 
@@ -586,18 +604,20 @@ class Quantity(np.ndarray):
     def min(self, axis=None, out=None):
         ret = self.magnitude.min(axis, None if out is None else out.magnitude)
         dim = self.dimensionality
+        meta = self._meta
         if out is None:
-            return Quantity(ret, dim, copy=False)
+            return Quantity(ret, dim, meta, copy=False)
         if not isinstance(out, Quantity):
             raise TypeError("out parameter must be a Quantity")
         out._dimensionality = dim
+        out._meta = meta
         return out
 
     @with_doc(np.nanmin)
     def nanmin(self, axis=None, out=None):
         return Quantity(
             np.nanmin(self.magnitude),
-            self.dimensionality,
+            self.dimensionality, self._meta,
             copy=False
         )
 
@@ -617,11 +637,13 @@ class Quantity(np.ndarray):
     def ptp(self, axis=None, out=None):
         ret = self.magnitude.ptp(axis, None if out is None else out.magnitude)
         dim = self.dimensionality
+        meta = self._meta
         if out is None:
-            return Quantity(ret, dim, copy=False)
+            return Quantity(ret, dim, meta, copy=False)
         if not isinstance(out, Quantity):
             raise TypeError("out parameter must be a Quantity")
         out._dimensionality = dim
+        out._meta = meta
         return out
 
     @with_doc(np.ndarray.clip)
@@ -629,8 +651,8 @@ class Quantity(np.ndarray):
         if min is None and max is None:
             raise ValueError("at least one of min or max must be set")
         else:
-            if min is None: min = Quantity(-np.Inf, self._dimensionality)
-            if max is None: max = Quantity(np.Inf, self._dimensionality)
+            if min is None: min = Quantity(-np.Inf, self._dimensionality, self._meta)
+            if max is None: max = Quantity(np.Inf, self._dimensionality, self.meta)
 
         if self.dimensionality and not \
                 (isinstance(min, Quantity) and isinstance(max, Quantity)):
@@ -644,40 +666,46 @@ class Quantity(np.ndarray):
             out
         )
         dim = self.dimensionality
+        meta = self._meta
         if out is None:
-            return Quantity(clipped, dim, copy=False)
+            return Quantity(clipped, dim, meta, copy=False)
         if not isinstance(out, Quantity):
             raise TypeError("out parameter must be a Quantity")
         out._dimensionality = dim
+        out._meta = meta
         return out
 
     @with_doc(np.ndarray.round)
     def round(self, decimals=0, out=None):
         ret = self.magnitude.round(decimals, None if out is None else out.magnitude)
         dim = self.dimensionality
+        meta = self._meta
         if out is None:
-            return Quantity(ret, dim, copy=False)
+            return Quantity(ret, dim, meta, copy=False)
         if not isinstance(out, Quantity):
             raise TypeError("out parameter must be a Quantity")
         out._dimensionality = dim
+        out._meta = meta
         return out
 
     @with_doc(np.ndarray.trace)
     def trace(self, offset=0, axis1=0, axis2=1, dtype=None, out=None):
         ret = self.magnitude.trace(offset, axis1, axis2, dtype, None if out is None else out.magnitude)
         dim = self.dimensionality
+        meta = self._meta
         if out is None:
-            return Quantity(ret, dim, copy=False)
+            return Quantity(ret, dim, meta, copy=False)
         if not isinstance(out, Quantity):
             raise TypeError("out parameter must be a Quantity")
         out._dimensionality = dim
+        out._meta = meta
         return out
 
     @with_doc(np.ndarray.squeeze)
     def squeeze(self, axis=None):
         return Quantity(
             self.magnitude.squeeze(axis),
-            self.dimensionality,
+            self.dimensionality, self._meta,
             copy=False
         )
 
@@ -685,11 +713,13 @@ class Quantity(np.ndarray):
     def mean(self, axis=None, dtype=None, out=None):
         ret = self.magnitude.mean(axis, dtype, None if out is None else out.magnitude)
         dim = self.dimensionality
+        meta = self._meta
         if out is None:
-            return Quantity(ret, dim, copy=False)
+            return Quantity(ret, dim, meta, copy=False)
         if not isinstance(out, Quantity):
             raise TypeError("out parameter must be a Quantity")
         out._dimensionality = dim
+        out._meta = meta
         return out
 
     @with_doc(np.nanmean)
@@ -697,36 +727,40 @@ class Quantity(np.ndarray):
         import numpy as np
         return Quantity(
             np.nanmean(self.magnitude, axis, dtype, out),
-            self.dimensionality,
+            self.dimensionality, self._meta,
             copy=False)
 
     @with_doc(np.ndarray.var)
     def var(self, axis=None, dtype=None, out=None, ddof=0):
         ret = self.magnitude.var(axis, dtype, out, ddof)
         dim = self._dimensionality**2
+        meta = self._meta
         if out is None:
-            return Quantity(ret, dim, copy=False)
+            return Quantity(ret, dim, meta, copy=False)
         if not isinstance(out, Quantity):
             raise TypeError("out parameter must be a Quantity")
         out._dimensionality = dim
+        out._meta = meta
         return out
 
     @with_doc(np.ndarray.std)
     def std(self, axis=None, dtype=None, out=None, ddof=0):
         ret = self.magnitude.std(axis, dtype, out, ddof)
         dim = self.dimensionality
+        meta = self._meta
         if out is None:
-            return Quantity(ret, dim, copy=False)
+            return Quantity(ret, dim, meta, copy=False)
         if not isinstance(out, Quantity):
             raise TypeError("out parameter must be a Quantity")
         out._dimensionality = dim
+        out._meta = meta
         return out
 
     @with_doc(np.nanstd)
     def nanstd(self, axis=None, dtype=None, out=None, ddof=0):
         return Quantity(
             np.nanstd(self.magnitude, axis, dtype, out, ddof),
-            self._dimensionality,
+            self._dimensionality, self._meta,
             copy=False
         )
 
@@ -739,22 +773,26 @@ class Quantity(np.ndarray):
 
         ret = self.magnitude.prod(axis, dtype, None if out is None else out.magnitude)
         dim = self._dimensionality**power
+        meta = self._meta
         if out is None:
-            return Quantity(ret, dim, copy=False)
+            return Quantity(ret, dim, meta, copy=False)
         if not isinstance(out, Quantity):
             raise TypeError("out parameter must be a Quantity")
         out._dimensionality = dim
+        out._meta = meta
         return out
 
     @with_doc(np.ndarray.cumsum)
     def cumsum(self, axis=None, dtype=None, out=None):
         ret = self.magnitude.cumsum(axis, dtype, None if out is None else out.magnitude)
         dim = self.dimensionality
+        meta = self._meta
         if out is None:
-            return Quantity(ret, dim, copy=False)
+            return Quantity(ret, dim, meta, copy=False)
         if not isinstance(out, Quantity):
             raise TypeError("out parameter must be a Quantity")
         out._dimensionality = dim
+        out._meta = meta
         return out
 
     @with_doc(np.ndarray.cumprod)
@@ -767,10 +805,12 @@ class Quantity(np.ndarray):
 
         ret = self.magnitude.cumprod(axis, dtype, out)
         dim = self.dimensionality
+        meta = self._meta
         if out is None:
-            return Quantity(ret, dim, copy=False)
+            return Quantity(ret, dim, meta, copy=False)
         if isinstance(out, Quantity):
             out._dimensionality = dim
+            out._meta = meta
         return out
 
     # list of unsupported functions: [choose]
@@ -803,7 +843,7 @@ class Quantity(np.ndarray):
         same unit as X
         '''
         Resultat = self.copy()
-                # vecteur
+        # vecteur
         if self.ndim == 1:
             if extend:
                 Resultat[:-1] = np.diff(self, n=1, axis=0)
@@ -818,7 +858,7 @@ class Quantity(np.ndarray):
                 Resultat[-1, :] = Resultat[-2, :]
             else:
                 Resultat[1:, :] = np.diff(self, n=1, axis=0)
-                Resultat[0, :] = Resultat[1, :]    
+                Resultat[0, :] = Resultat[1, :]
         return Resultat
 
 def _reconstruct_quantity(subtype, baseclass, baseshape, basetype,):
