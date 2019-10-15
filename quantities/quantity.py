@@ -124,7 +124,7 @@ class Quantity(np.ndarray):
     # TODO: what is an appropriate value?
     __array_priority__ = 21
 
-    def __new__(cls, data, units='', meta={}, dtype=None, copy=True):
+    def __new__(cls, data, units='', meta=None, dtype=None, copy=True):
         if isinstance(data, Quantity):
             if units:
                 data = data.rescale(units)
@@ -136,7 +136,10 @@ class Quantity(np.ndarray):
         ret._dimensionality.update(validate_dimensionality(units))
         
         # ajout métadonnées
-        ret._meta = meta
+        if meta is None:
+            ret._meta = {}
+        else:
+            ret._meta = meta
         
         if isinstance(units, Quantity):
             unitstr = units._dimensionality.string
@@ -146,8 +149,10 @@ class Quantity(np.ndarray):
             unitstr = units
         try:
             ret._plotaxislabel = plotaxislabels_dict[unitstr]
+            ret._meta['PlotAxisLabel'] = plotaxislabels_dict[unitstr]
         except KeyError:
             ret._plotaxislabel = ''
+            ret._meta['PlotAxisLabel'] = ''
     
         return ret
 
@@ -224,10 +229,14 @@ class Quantity(np.ndarray):
     
     @property
     def plotaxislabel(self):
+        print(self._meta['PlotAxisLabel'] + ' [' + self._dimensionality.string + ']')
         return self._plotaxislabel + ' [' + self._dimensionality.string + ']'
+    
     @plotaxislabel.setter
     def plotaxislabel(self, label):
+        print('plotaxislabel setter')
         self._plotaxislabel = label
+        self._meta['PlotAxisLabel'] = label
 
     def rescale(self, units):
         """
@@ -268,8 +277,6 @@ class Quantity(np.ndarray):
         if hasattr(obj, '_meta'):
             self._meta = getattr(obj, '_meta')
 
-
-
     def __array_prepare__(self, obj, context=None):
         if self.__array_priority__ >= Quantity.__array_priority__:
             res = obj if isinstance(obj, type(self)) else obj.view(type(self))
@@ -294,7 +301,6 @@ class Quantity(np.ndarray):
         return res
 
     def __array_wrap__(self, obj, context=None):
-
         if not isinstance(obj, Quantity):
             # backwards compatibility with numpy-1.3
             obj = self.__array_prepare__(obj, context)
@@ -303,9 +309,7 @@ class Quantity(np.ndarray):
                 obj._plotaxislabel = plotaxislabels_dict[obj._dimensionality.string]
             except KeyError:
                 obj._plotaxislabel = ''
-
             obj._meta = getattr(self, '_meta', {})
-        
         return obj
 
     @with_doc(np.ndarray.__add__)
