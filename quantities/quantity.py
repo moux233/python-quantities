@@ -139,7 +139,7 @@ class Quantity(np.ndarray):
         if meta is None:
             ret._meta = {}
         else:
-            ret._meta = meta
+            ret._meta = meta.copy()
         
         if isinstance(units, Quantity):
             unitstr = units._dimensionality.string
