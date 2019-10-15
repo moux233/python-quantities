@@ -18,7 +18,7 @@ class UncertainQuantity(Quantity):
     __array_priority__ = 22
 
     def __new__(cls, data, units='', uncertainty=None, dtype='d', copy=True):
-        ret = Quantity.__new__(cls, data, units, dtype, copy)
+        ret = Quantity.__new__(cls, data, units, dtype=dtype, copy=copy)
         # _uncertainty initialized to be dimensionless by __array_finalize__:
         ret._uncertainty._dimensionality = ret._dimensionality
 

@@ -124,7 +124,7 @@ class Quantity(np.ndarray):
     # TODO: what is an appropriate value?
     __array_priority__ = 21
 
-    def __new__(cls, data, units='', meta=None, dtype=None, copy=True):
+    def __new__(cls, data, units='', meta={}, dtype=None, copy=True):
         if isinstance(data, Quantity):
             if units:
                 data = data.rescale(units)
@@ -245,7 +245,7 @@ class Quantity(np.ndarray):
                 'Unable to convert between units of "%s" and "%s"'
                 %(from_u._dimensionality, to_u._dimensionality)
             )
-        return Quantity(cf*self.magnitude, to_u, self.meta)
+        return Quantity(cf*self.magnitude, to_u, getattr(self, '_meta', {}))
 
     @with_doc(np.ndarray.astype)
     def astype(self, dtype=None, **kwargs):
@@ -257,7 +257,7 @@ class Quantity(np.ndarray):
             if self.__array_priority__ >= Quantity.__array_priority__:
                 ret = type(self)(ret, self._dimensionality)
             else:
-                ret = Quantity(ret, self._dimensionality, self.meta)
+                ret = Quantity(ret, self._dimensionality, getattr(self, '_meta', {}))
 
         return ret
 
@@ -303,7 +303,7 @@ class Quantity(np.ndarray):
                 obj._plotaxislabel = plotaxislabels_dict[obj._dimensionality.string]
             except KeyError:
                 obj._plotaxislabel = ''
-            print('array_wrap')
+
             obj._meta = getattr(self, '_meta', {})
         
         return obj
@@ -442,7 +442,7 @@ class Quantity(np.ndarray):
         if isinstance(ret, Quantity):
             return ret
         else:  # scalaires
-            return Quantity(ret, self._dimensionality, self.meta)
+            return Quantity(ret, self._dimensionality, self._meta)
 
     @with_doc(np.ndarray.__setitem__)
     def __setitem__(self, key, value):
