@@ -58,7 +58,10 @@ class UnitRegistry:
         # make sure we can parse the label ....
         if label == '': label = 'dimensionless'
         if "%" in label: label = label.replace("%", "percent")
-        if label.lower() == "in": label = "inch"
+#        if "in" in label: 
+#            label = label.replace("in", "inch")
+#            print(label)
+        if label.lower() == "in": label = "inch"  # not enough : in² lb/in etc
 
         return self.__registry[label]
 

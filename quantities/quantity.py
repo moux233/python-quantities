@@ -16,6 +16,7 @@ from functools import wraps
 import sys
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from . import markup
 from .dimensionality import Dimensionality, p_dict
@@ -193,7 +194,9 @@ class Quantity(np.ndarray):
         rq = 1*unit_registry['dimensionless']
         for u, d in self.dimensionality.items():
             rq = rq * u.simplified**d
-        return rq * self.magnitude
+        ret = rq * self.magnitude
+        ret._meta = getattr(self, '_meta', {})
+        return ret
 
     @property
     def units(self):
@@ -423,12 +426,37 @@ class Quantity(np.ndarray):
         )
 
     @with_doc(np.ndarray.__str__)
+#    def __str__(self):
+#        if markup.config.use_unicode:
+#            dims = self.dimensionality.unicode
+#        else:
+#            dims = self.dimensionality.string
+#        return '%s %s'%(str(self.magnitude), dims)
+    
     def __str__(self):
-        if markup.config.use_unicode:
-            dims = self.dimensionality.unicode
+        return self._numstr(self.magnitude.item(0))
+        
+    def _numstr(self, Valeur, ChiffresSignificatifs=3):
+        if Valeur == 0:
+            return '0 {}'.format(self.dimensionality.unicode)
+        Decade = int(np.floor(np.log10(np.abs(Valeur))))
+        if (Decade > 2) or (Decade < -3):
+            return '{:.{}e} {}'.format(Valeur, ChiffresSignificatifs - 1, self.dimensionality.unicode)
         else:
-            dims = self.dimensionality.string
-        return '%s %s'%(str(self.magnitude), dims)
+            return '{:.{}f} {}'.format(np.around(Valeur, decimals=-Decade + ChiffresSignificatifs - 1), np.max((0, -Decade + ChiffresSignificatifs - 1)), self.dimensionality.unicode)
+    
+    def plot(self, axes, x=None):
+        if not x is None:
+            axes.plot(x, self, linewidth=2)
+        elif 'Frequency' in self._meta.keys():
+            x = (np.arange(self.shape[0]) / self._meta['Frequency']).simplified
+            axes.plot(x, self, linewidth=2)
+        else:
+            return
+        axes.set_xlabel(x.plotaxislabel)
+        axes.set_ylabel(self.plotaxislabel)
+        if 'Legend' in self._meta.keys():
+            axes.legend(self._meta['Legend'])
 
     if tuple(map(int, np.__version__.split('.')[:2])) >= (1, 14):
         # in numpy 1.14 the formatting of scalar values was changed
