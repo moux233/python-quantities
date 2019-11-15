@@ -149,10 +149,8 @@ class Quantity(np.ndarray):
         else:
             unitstr = units
         try:
-            ret._plotaxislabel = plotaxislabels_dict[unitstr]
             ret._meta['PlotAxisLabel'] = plotaxislabels_dict[unitstr]
         except KeyError:
-            ret._plotaxislabel = ''
             ret._meta['PlotAxisLabel'] = ''
     
         return ret
@@ -232,13 +230,10 @@ class Quantity(np.ndarray):
     
     @property
     def plotaxislabel(self):
-        print(self._meta['PlotAxisLabel'] + ' [' + self._dimensionality.string + ']')
-        return self._plotaxislabel + ' [' + self._dimensionality.string + ']'
+        return self._meta['PlotAxisLabel'] + ' [' + self._dimensionality.unicode + ']'
     
     @plotaxislabel.setter
     def plotaxislabel(self, label):
-        print('plotaxislabel setter')
-        self._plotaxislabel = label
         self._meta['PlotAxisLabel'] = label
 
     def rescale(self, units):
@@ -275,8 +270,6 @@ class Quantity(np.ndarray):
 
     def __array_finalize__(self, obj):
         self._dimensionality = getattr(obj, 'dimensionality', Dimensionality())
-        if hasattr(obj, '_plotaxislabel'):
-            self._plotaxislabel = getattr(obj, '_plotaxislabel')
         if hasattr(obj, '_meta'):
             self._meta = getattr(obj, '_meta')
 
@@ -308,10 +301,6 @@ class Quantity(np.ndarray):
             # backwards compatibility with numpy-1.3
             obj = self.__array_prepare__(obj, context)
         else:  # obj is a Quantity
-            try:
-                obj._plotaxislabel = plotaxislabels_dict[obj._dimensionality.string]
-            except KeyError:
-                obj._plotaxislabel = ''
             obj._meta = getattr(self, '_meta', {})
         return obj
 
@@ -445,18 +434,26 @@ class Quantity(np.ndarray):
         else:
             return '{:.{}f} {}'.format(np.around(Valeur, decimals=-Decade + ChiffresSignificatifs - 1), np.max((0, -Decade + ChiffresSignificatifs - 1)), self.dimensionality.unicode)
     
-    def plot(self, axes, x=None):
-        if not x is None:
-            axes.plot(x, self, linewidth=2)
-        elif 'Frequency' in self._meta.keys():
-            x = (np.arange(self.shape[0]) / self._meta['Frequency']).simplified
-            axes.plot(x, self, linewidth=2)
-        else:
-            return
+    def plot(self, axes=None, x=None):
+        # x definition
+        if x is None:
+            if 'Frequency' in self._meta.keys():
+                x = (np.arange(self.shape[0]) / self._meta['Frequency']).rescale('s')
+            else:
+                return None
+        # axes definition
+        if axes is None:
+            FigTitle = self._meta['PlotAxisLabel'] + ' vs ' + x._meta['PlotAxisLabel']
+            fig, axes = plt.subplots(num=FigTitle, clear=True)
+
+        axes.plot(x, self, linewidth=2)
         axes.set_xlabel(x.plotaxislabel)
         axes.set_ylabel(self.plotaxislabel)
+        
         if 'Legend' in self._meta.keys():
             axes.legend(self._meta['Legend'])
+        
+        return axes
 
     if tuple(map(int, np.__version__.split('.')[:2])) >= (1, 14):
         # in numpy 1.14 the formatting of scalar values was changed

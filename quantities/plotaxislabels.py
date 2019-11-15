@@ -6,13 +6,14 @@ Created on Tue Oct  8 14:52:27 2019
 """
 
 default_labels_FR = {
-        'Vitesse de rotation': ['deg/h', 'mdeg/h', 'µdeg/h', 'rad/s', '°/h'],
+        'Vitesse de rotation': ['deg/h', 'mdeg/h', 'µdeg/h', 'rad/s', '°/h', 'm°/h', 'µ°/h'],
         'Accélération': ['m/s²', 'm/s^2', 'gMarly', 'Gal'],
         'Température': ['°C', 'degC', 'm°C', 'mdegC', 'K'],
         'Temps': ['h', 'min', 's'],
-        'Angle': ['deg', '°', 'arcmin', 'arcsec', 'rad', 'mrad', 'mdeg', 'µdeg'],
+        'Angle': ['deg', '°', 'arcmin', 'arcsec', 'rad', 'mrad', 'mdeg', 'm°', 'µdeg', 'µ°'],
         'Vitesse': ['m/s', 'kn', 'km/h'],
         'Longueur': ['m', 'km', 'mm', 'µm', 'nm', 'Nq'],
+        'Fréquence': ['Hz', '1/s']
         }
 
 plotaxislabels_dict = {}
